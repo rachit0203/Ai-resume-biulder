@@ -1,80 +1,127 @@
-import React from "react";
-import { useState } from "react";
-import { CopyPlus, Loader } from "lucide-react";
+import React, { useState } from "react";
+import { Plus, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createNewResume } from "@/Services/resumeAPI";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
-function AddResume() {
+// This component now accepts 'refreshData' to update the dashboard after creation.
+function AddResume({ refreshData }) {
   const [isDialogOpen, setOpenDialog] = useState(false);
-  const [resumetitle, setResumetitle] = useState("");
+  const [resumeTitle, setResumeTitle] = useState("");
   const [loading, setLoading] = useState(false);
-  const Navigate = useNavigate();
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const createResume = async () => {
+  const onCreateResume = async (e) => {
+    e.preventDefault(); // Prevent form submission from reloading the page
+    const trimmedTitle = resumeTitle.trim();
+
+    if (!trimmedTitle) {
+      setError("Please provide a title for your resume.");
+      return;
+    }
+
     setLoading(true);
-    if (resumetitle === "")
-      return console.log("Please add a title to your resume");
+    setError("");
+
     const data = {
       data: {
-        title: resumetitle,
+        title: trimmedTitle,
+        // You can add more default fields here if needed
         themeColor: "#000000",
       },
     };
-    console.log(`Creating Resume ${resumetitle}`);
-    createNewResume(data)
-      .then((res) => {
-        console.log("Prinitng From AddResume Respnse of Create Resume", res);
-        Navigate(`/dashboard/edit-resume/${res.data.resume._id}`);
-      })
-      .finally(() => {
-        setLoading(false);
-        setResumetitle("");
-      });
+
+    try {
+      const response = await createNewResume(data);
+      console.log("Response from Create Resume", response);
+      toast.success("Resume created successfully!");
+      setOpenDialog(false);
+      setResumeTitle("");
+      refreshData(); // Refresh the resume list on the dashboard
+      // Navigate to the new resume's edit page
+      navigate(`/dashboard/edit-resume/${response.data.resume._id}`);
+    } catch (err) {
+      console.error("Failed to create resume:", err);
+      toast.error("Failed to create resume. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
+
   return (
     <>
       <div
-        className="p-14 py-24 flex items-center justify-center border-2 bg-secondary rounded-lg h-[380px] hover:scale-105 transition-all duration-400 cursor-pointer hover:shadow-md transform-gpu"
+        className="
+          flex flex-col items-center justify-center 
+          border-2 border-dashed rounded-lg p-6 h-full min-h-[280px]
+          text-gray-500 bg-gray-50
+          transition-all duration-300 ease-in-out
+          cursor-pointer hover:border-blue-500 hover:text-blue-500 hover:shadow-lg hover:-translate-y-1
+        "
         onClick={() => setOpenDialog(true)}
       >
-        <CopyPlus className="transition-transform duration-300" />
+        <Plus className="h-12 w-12" />
+        <h2 className="mt-2 font-semibold text-lg">Add New Resume</h2>
       </div>
-      <Dialog open={isDialogOpen}>
-        <DialogContent setOpenDialog={setOpenDialog}>
+
+      <Dialog open={isDialogOpen} onOpenChange={setOpenDialog}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Create a New Resume</DialogTitle>
             <DialogDescription>
-              Add a title and Description to your new resume
-              <Input
-                className="my-3"
-                type="text"
-                placeholder="Ex: Backend Resume"
-                value={resumetitle}
-                onChange={(e) => setResumetitle(e.target.value.trimStart())}
-              />
+              Give your new resume a title to get started. You can change it later.
             </DialogDescription>
-            <div className="gap-2 flex justify-end">
-              <Button variant="ghost" onClick={() => setOpenDialog(false)}>
-                Cancel
-              </Button>
-              <Button onClick={createResume} disabled={!resumetitle || loading}>
+          </DialogHeader>
+
+          <form onSubmit={onCreateResume}>
+            <div className="mt-4">
+              <label htmlFor="resumeTitle" className="text-sm font-medium text-gray-700">
+                Resume Title
+              </label>
+              <Input
+                id="resumeTitle"
+                className="my-2"
+                type="text"
+                placeholder="Ex: Senior Software Engineer"
+                value={resumeTitle}
+                onChange={(e) => {
+                  setResumeTitle(e.target.value);
+                  if (error) setError(""); // Clear error when user starts typing
+                }}
+              />
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+
+            <DialogFooter className="mt-6">
+              <DialogClose asChild>
+                <Button type="button" variant="ghost">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={loading}>
                 {loading ? (
-                  <Loader className=" animate-spin" />
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
                 ) : (
-                  "Create Resume"
+                  "Create"
                 )}
               </Button>
-            </div>
-          </DialogHeader>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>
@@ -82,3 +129,4 @@ function AddResume() {
 }
 
 export default AddResume;
+
