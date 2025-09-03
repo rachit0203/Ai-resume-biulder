@@ -9,13 +9,13 @@ import { toast } from "sonner";
 import { AIChatSession } from "@/Services/AiModel";
 import { updateThisResume } from "@/Services/resumeAPI";
 
-const prompt =
-  "Job Title: {jobTitle} , Depends on job title give me list of  summery for 3 experience level, Mid Level and Freasher level in 3 -4 lines in array format, With summery and experience_level Field in JSON Format";
+const prompt = 
+  "Job Title: {jobTitle}. Generate summaries for 3 experience levels (Fresher, Mid Level, Senior) in 3-4 lines each. Return ONLY a JSON array (not an object) with format: [{\"summary\": \"text\", \"experience_level\": \"level\"}, ...]. Do not wrap in any other object or property.";
 function Summary({ resumeInfo, enanbledNext, enanbledPrev }) {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false); // Declare the undeclared variable using useState
   const [summary, setSummary] = useState(resumeInfo?.summary || ""); // Declare the undeclared variable using useState
-  const [aiGeneratedSummeryList, setAiGenerateSummeryList] = useState(null); // Declare the undeclared variable using useState
+  const [aiGeneratedSummeryList, setAiGenerateSummeryList] = useState([]); // Initialize as empty array
   const { resume_id } = useParams();
 
   const handleInputChange = (e) => {
@@ -63,26 +63,50 @@ function Summary({ resumeInfo, enanbledNext, enanbledPrev }) {
     setSummary(summary);
   };
 
-  const GenerateSummeryFromAI = async () => {
+  const GenerateSummaryFromAI = async () => {
     setLoading(true);
-    console.log("Generate Summery From AI for", resumeInfo?.jobTitle);
+    console.log("Generate Summary From AI for", resumeInfo?.jobTitle);
     if (!resumeInfo?.jobTitle) {
       toast("Please Add Job Title");
       setLoading(false);
       return;
     }
     const PROMPT = prompt.replace("{jobTitle}", resumeInfo?.jobTitle);
-    try {
-      const result = await AIChatSession.sendMessage(PROMPT);
-      console.log(JSON.parse(result.response.text()));
-      setAiGenerateSummeryList(JSON.parse(result.response.text()));
-      toast("Summery Generated", "success");
-    } catch (error) {
-      console.log(error);
-      toast("${error.message}", `${error.message}`);
-    } finally {
-      setLoading(false);
+    
+    const MAX_RETRIES = 3;
+    const INITIAL_DELAY = 1000; // 1 second
+    
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const result = await AIChatSession.sendMessage(PROMPT);
+        const parsedResult = JSON.parse(result.response.text());
+        console.log(parsedResult);
+        setAiGenerateSummeryList(parsedResult);
+        toast.success("Summary generated successfully!");
+        return; // Success, exit the function
+      } catch (error) {
+        console.error(`Attempt ${attempt} failed:`, error);
+        
+        if (error.message.includes('503') && attempt < MAX_RETRIES) {
+          // Exponential backoff: wait longer after each retry
+          const delay = INITIAL_DELAY * Math.pow(2, attempt - 1);
+          console.log(`Model overloaded, retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue; // Try again
+        }
+        
+        // If we've exhausted retries or it's a different error
+        toast.error(attempt === MAX_RETRIES 
+          ? "Failed to generate summary after multiple attempts. Please try again later." 
+          : error.message);
+        break;
+      } finally {
+        if (attempt === MAX_RETRIES) {
+          setLoading(false);
+        }
+      }
     }
+    setLoading(false);
   };
 
   return (
@@ -96,7 +120,7 @@ function Summary({ resumeInfo, enanbledNext, enanbledPrev }) {
             <label>Add Summery</label>
             <Button
               variant="outline"
-              onClick={() => GenerateSummeryFromAI()}
+              onClick={GenerateSummaryFromAI}
               type="button"
               size="sm"
               className="border-primary text-primary flex gap-2"
@@ -119,10 +143,10 @@ function Summary({ resumeInfo, enanbledNext, enanbledPrev }) {
         </form>
       </div>
 
-      {aiGeneratedSummeryList && (
+      {Array.isArray(aiGeneratedSummeryList) && aiGeneratedSummeryList.length > 0 && (
         <div className="my-5">
           <h2 className="font-bold text-lg">Suggestions</h2>
-          {aiGeneratedSummeryList?.map((item, index) => (
+          {aiGeneratedSummeryList.map((item, index) => (
             <div
               key={index}
               onClick={() => {

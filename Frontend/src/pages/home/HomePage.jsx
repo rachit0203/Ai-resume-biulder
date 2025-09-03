@@ -7,139 +7,138 @@ import { Button } from "@/components/ui/button";
 import { startUser } from "../../Services/login.js";
 import { useDispatch, useSelector } from "react-redux";
 import { addUserData } from "@/features/user/userFeatures.js";
+import { motion } from "framer-motion";
 
 function HomePage() {
   const user = useSelector((state) => state.editUser.userData);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  // This function opens the GitHub link in a new tab. It remains unchanged.
   const handleClick = () => {
-    window.open(
-      "https://github.com/sahidrajaansari/Ai-Resume-Builder",
-      "_blank"
-    );
+    window.open("https://github.com/rachit0203/Ai-resume-biulder", "_blank");
   };
 
+  // This effect fetches user data on component mount. The logic is unchanged.
   useEffect(() => {
     const fetchResponse = async () => {
       try {
         const response = await startUser();
-        if (response.statusCode == 200) {
+        if (response.statusCode === 200) {
           dispatch(addUserData(response.data));
         } else {
           dispatch(addUserData(""));
         }
       } catch (error) {
-        console.log(
-          "Printing from Home Page there was a error ->",
-          error.message
-        );
+        console.log("Printing from Home Page there was a error ->", error.message);
         dispatch(addUserData(""));
       }
     };
     fetchResponse();
   }, []);
 
+  // This function navigates the user based on their login status. It remains unchanged.
   const hadnleGetStartedClick = () => {
     if (user) {
-      console.log("Printing from Homepage User is There ");
       navigate("/dashboard");
     } else {
-      console.log("Printing for Homepage User Not Found");
       navigate("/auth/sign-in");
     }
   };
+
   return (
-    <>
+    // The main wrapper uses a dark background now.
+    <div className="bg-gray-900">
       <Header user={user} />
-      <section className="pt-24 pb-20 bg-white">
-        <div className="px-12 mx-auto max-w-7xl">
-          <div className="w-full mx-auto text-left md:w-11/12 xl:w-9/12 md:text-center">
-            <h1 className="mb-8 text-4xl font-extrabold leading-none tracking-normal text-gray-900 md:text-6xl md:tracking-tight">
-              <span>Start</span>{" "}
-              <span className="block w-full py-2 text-transparent bg-clip-text leading-12 bg-gradient-to-r from-green-400 to-purple-500 lg:inline">
-                building a Resume
+      {/* SECTION: Main hero section with a new dark gradient background */}
+      <section className="relative pt-24 pb-20 bg-gradient-to-b from-gray-900 to-slate-800 text-white">
+        <div className="px-6 mx-auto max-w-7xl">
+          {/* Text Section */}
+          <motion.div
+            className="w-full mx-auto text-center md:w-11/12 xl:w-9/12"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            {/* The heading now uses light text and a new blue/cyan gradient for the highlighted span */}
+            <h1 className="mb-6 text-5xl font-extrabold tracking-tight text-gray-100 md:text-6xl">
+              Craft a Standout{" "}
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500">
+                AI-Powered Resume
               </span>{" "}
-              <span>for your next Job</span>
+              in Minutes
             </h1>
-            <p className="px-0 mb-8 text-lg text-gray-600 md:text-xl lg:px-24">
-              Build. Refine. Shine. With AI-Driven Resumes
+            {/* The paragraph text is now a lighter gray for better contrast on the dark background */}
+            <p className="px-0 mb-10 text-lg text-gray-400 md:text-xl lg:px-24">
+              Your Career, Elevated. Let AI build your perfect resume.
             </p>
-            <div className="mb-4 space-x-0 md:space-x-2 md:mb-8">
-              <a
-                className="inline-flex items-center justify-center w-full px-6 py-3 mb-2 text-lg text-white bg-green-400 rounded-2xl sm:w-auto sm:mb-0 hover:cursor-pointer"
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+              {/* The primary button has a new blue gradient and a subtle glow on hover */}
+              <Button
                 onClick={hadnleGetStartedClick}
+                className="px-8 py-4 text-lg font-semibold text-white rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg hover:shadow-xl hover:shadow-cyan-500/50 hover:scale-105 transition"
               >
                 Get Started
-                <svg
-                  className="w-4 h-4 ml-1"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  ></path>
-                </svg>
-              </a>
-              <a
+              </Button>
+              {/* The secondary button is styled for a dark theme */}
+              <Button
+                variant="secondary"
                 onClick={handleClick}
-                className="inline-flex items-center justify-center w-full px-6 py-3 mb-2 text-lg bg-gray-100 rounded-2xl sm:w-auto sm:mb-0 cursor-pointer"
+                className="px-8 py-4 text-lg font-semibold text-gray-200 bg-gray-700/50 border border-gray-600 rounded-full shadow hover:bg-gray-700 hover:scale-105 transition"
               >
                 Learn More
-                <svg
-                  className="w-4 h-4 ml-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                  ></path>
-                </svg>
-              </a>
+              </Button>
             </div>
-          </div>
-          <div className="w-full mx-auto mt-20 text-center md:w-10/12">
+          </motion.div>
+
+          {/* Hero Image */}
+          <motion.div
+            className="w-full mx-auto mt-20 md:w-10/12"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1 }}
+          >
             <div className="relative z-0 w-full mt-8">
-              <div className="relative overflow-hidden shadow-2xl">
-                <div className="flex items-center justify-between px-4 bg-gradient-to-r from-green-400 to-purple-500 h-11 rounded-t-xl">
-                  <div className="flex space-x-1.5">
-                    <FaCircle className="w-3 h-3 text-white hover:text-gray-300 transition duration-300 transform hover:scale-125" />
-                    <FaCircle className="w-3 h-3 text-white hover:text-gray-300 transition duration-300 transform hover:scale-125" />
-                    <FaCircle className="w-3 h-3 text-white hover:text-gray-300 transition duration-300 transform hover:scale-125" />
+              {/* The container for the image now has a "glassmorphism" effect with a blurred background */}
+              <div className="relative overflow-hidden border rounded-3xl backdrop-blur-xl bg-slate-900/50 border-slate-700 shadow-2xl">
+                {/* The window bar is now a darker, more modern color */}
+                <div className="flex items-center justify-between px-4 bg-slate-800 h-12 rounded-t-3xl">
+                  {/* The window control buttons now have macOS-style colors */}
+                  <div className="flex space-x-2">
+                    <FaCircle className="w-3 h-3 text-red-500" />
+                    <FaCircle className="w-3 h-3 text-yellow-500" />
+                    <FaCircle className="w-3 h-3 text-green-500" />
                   </div>
-                  <FaInfoCircle className="text-white hover:text-gray-300 transition duration-300 transform hover:rotate-45" />
+                  <FaInfoCircle className="text-gray-400 transition transform hover:text-white" />
                 </div>
+                {/* Image remains the same, but padding adjusted slightly */}
                 <img
-                  className="object-cover py-2 px-4 rounded-b-lg transition duration-300 transform hover:scale-105"
+                  className="object-cover w-full p-4 rounded-b-3xl"
                   src={heroSnapshot}
                   alt="Dashboard"
                 />
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
-      <footer className="bg-white" aria-labelledby="footer-heading">
-        <div className="mt-16 border-t border-gray-900/10 pt-8 sm:mt-20 lg:mt-24 p-5 flex justify-between">
-          <p className="text-xs leading-5 text-gray-500">
-            &copy; 2024 Ai-Resume-Builder. All rights reserved.
-          </p>
-          <div>
-            <Button variant="secondary" onClick={handleClick}>
-              <FaGithub className="w-4 h-4 mr-1" />
-              GitHub
-            </Button>
-          </div>
+
+      {/* FOOTER: Updated for the dark theme */}
+      <footer className="bg-gray-900 border-t border-gray-800" aria-labelledby="footer-heading">
+        <div className="mx-auto max-w-7xl p-6 flex flex-col sm:flex-row justify-between items-center">
+          <p className="text-xs text-gray-500">&copy; 2024 Ai-Resume-Builder. All rights reserved.</p>
+          {/* GitHub button styled to match the dark theme */}
+          <Button
+            variant="ghost" // Use ghost variant for a cleaner look on dark bg
+            onClick={handleClick}
+            className="mt-3 sm:mt-0 flex items-center gap-2 text-gray-400 hover:bg-gray-800 hover:text-white transition"
+          >
+            <FaGithub className="w-4 h-4" />
+            GitHub
+          </Button>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
 
