@@ -12,11 +12,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 
+const allowedOrigins = process.env.ALLOWED_SITE.split(',');
 const corsOptions = {
-    origin: [process.env.ALLOWED_SITE],
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 };
-
 app.use(cors(corsOptions));
 
 app.use("/api/users", userRouter);
