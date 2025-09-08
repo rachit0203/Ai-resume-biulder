@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getResumeData } from "@/Services/resumeAPI";
@@ -7,24 +7,39 @@ import { useDispatch } from "react-redux";
 import { addResumeData } from "@/features/resume/resumeFeatures";
 import { RWebShare } from "react-web-share";
 import { toast } from "sonner";
+import { generatePdfFromElement } from "@/utils/pdfGenerator";
+import { Download } from "lucide-react";
 
 function ViewResume() {
   const [resumeInfo, setResumeInfo] = React.useState({});
   const { resume_id } = useParams();
   const dispatch = useDispatch();
+  const resumeRef = useRef(null);
 
   useEffect(() => {
     fetchResumeInfo();
   }, []);
+
   const fetchResumeInfo = async () => {
     const response = await getResumeData(resume_id);
     // console.log(response.data);
     dispatch(addResumeData(response.data));
   };
 
-  const HandleDownload = () => {
-    window.print();
+  const handleDownloadPdf = async () => {
+    try {
+      const success = await generatePdfFromElement('print-area', 'resume');
+      if (success) {
+        toast.success("PDF generated successfully!");
+      } else {
+        throw new Error('Failed to generate PDF');
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error("Failed to generate PDF. Please try again.");
+    }
   };
+
   return (
     <>
       <div className="flex flex-col justify-center items-center">
@@ -37,8 +52,13 @@ function ViewResume() {
               Now you are ready to download your resume and you can share unique
               resume url with your friends and family{" "}
             </p>
+            <div className="w-full flex justify-center items-center p-5">
+              <Button onClick={handleDownloadPdf} className="gap-2">
+                <Download className="h-4 w-4" />
+                Download PDF
+              </Button>
+            </div>
             <div className="flex justify-between px-44 my-10">
-              <Button onClick={HandleDownload}>Download</Button>
               <RWebShare
                 data={{
                   text: "Hello This is My resume",
@@ -53,12 +73,15 @@ function ViewResume() {
           </div>
         </div>
         <div
-          className=" bg-white rounded-lg p-8 print-area"
-          style={{ width: "210mm", height: "297mm" }}
+          id="print-area"
+          className="bg-white rounded-lg p-8 print-area mx-auto"
+          style={{ 
+            width: "210mm", 
+            minHeight: "297mm",
+            boxShadow: '0 0 10px rgba(0,0,0,0.1)'
+          }}
         >
-          <div className="print">
-            <ResumePreview />
-          </div>
+          <ResumePreview />
         </div>
       </div>
     </>
